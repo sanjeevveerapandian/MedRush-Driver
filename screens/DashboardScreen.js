@@ -1,187 +1,80 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  Alert,
-} from "react-native";
-import MapView, { Marker } from "react-native-maps";
-import { MaterialIcons } from "@expo/vector-icons";
-import * as Location from "expo-location";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-
-const hospitalOptions = ["Government Hospitals", "Private Hospitals"];
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios"; // Import axios
 
 export default function DashboardScreen() {
-  const [region, setRegion] = useState({
-    latitude: 13.0827,
-    longitude: 80.2707,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedHospital, setSelectedHospital] = useState(
-    "Select Hospital Type"
-  );
-  const [locationPermission, setLocationPermission] = useState(false);
-  const [places, setPlaces] = useState([]); // State to hold nearby places
+  const [serviceStatus, setServiceStatus] = useState(""); // To track if the driver has accepted or rejected
+  const navigation = useNavigation(); // Access the navigation object
 
-  const GOOGLE_MAPS_API_KEY = "AIzaSyDGnitSNb0QQ1VyRV7fdBJeCbI-owV28ko"; // Replace with your actual Google Maps API key
+  // Firebase endpoint URL to store the driver's acceptance status
+  const FIREBASE_URL =
+    "https://driver-cfd31-default-rtdb.asia-southeast1.firebasedatabase.app/bookings.json";
 
-  // Function to get location
-  const getLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission Denied",
-        "Permission to access location was denied."
-      );
-      return;
-    }
-    setLocationPermission(true);
-    const location = await Location.getCurrentPositionAsync({});
-    setRegion({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
-  };
-
-  const handleSearch = (data, details = null) => {
-    // Extract the location from the place details
-    const { lat, lng } = details.geometry.location;
-    // Update map region to the selected place
-    setRegion({
-      latitude: lat,
-      longitude: lng,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
-    // Fetch places nearby using Places API
-    fetchNearbyPlaces(lat, lng);
-  };
-
-  // Function to fetch nearby places based on search location
-  const fetchNearbyPlaces = async (lat, lng) => {
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1500&type=hospital&key=${GOOGLE_MAPS_API_KEY}`;
-
+  // Function to update the acceptance status in Firebase
+  const updateAcceptanceStatus = async (status) => {
     try {
-      const response = await fetch(url);
-      const result = await response.json();
-      setPlaces(result.results); // Update places state with nearby hospitals
+      const response = await axios.post(FIREBASE_URL, {
+        driverId: "driver123", // Replace with actual driver ID
+        bookingId: "booking456", // Replace with actual booking ID
+        status: status,
+        timestamp: Date.now(), // Optional: timestamp of the action
+      });
+      console.log("Response from Firebase:", response.data);
     } catch (error) {
-      console.error("Error fetching nearby places:", error);
+      console.error("Error updating Firebase:", error);
+      Alert.alert("Error", "Failed to update the status in Firebase.");
     }
   };
 
-  useEffect(() => {
-    getLocation(); // Get user's location when component mounts
-  }, []);
+  const handleAccept = () => {
+    setServiceStatus("accepted");
+    updateAcceptanceStatus("accepted"); // Store status in Firebase
+    // Navigate to the next screen (e.g., LocationScreen)
+    navigation.navigate("LocationScreen"); // Ensure that you have this screen added in your navigator
+  };
+
+  const handleReject = () => {
+    setServiceStatus("rejected");
+    // Show a rejection message and reload the screen
+    Alert.alert(
+      "Service Rejected",
+      "You have rejected the request. The screen will reload.",
+      [{ text: "OK", onPress: () => setServiceStatus("") }] // Reset the status to reload the screen
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>MEDRUSH</Text>
+      <View style={styles.messageContainer}>
+        <Text style={styles.titleText}>Help Request</Text>
+        <Text style={styles.messageText}>
+          A person is seeking your assistance. Would you like to accept or
+          reject this request?
+        </Text>
       </View>
 
-      {/* Google Places Autocomplete Search */}
-      <GooglePlacesAutocomplete
-        placeholder="Search for nearby hospitals"
-        minLength={2}
-        returnKeyType={"search"}
-        fetchDetails={true}
-        onPress={handleSearch}
-        query={{
-          key: GOOGLE_MAPS_API_KEY,
-          language: "en",
-          types: "hospital", // You can specify the type of places to search for
-        }}
-        styles={{
-          textInput: styles.searchInput,
-        }}
-      />
-
-      {/* Hospital Selector */}
-      <View style={styles.hospitalContainer}>
+      {/* Accept and Reject Buttons */}
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={styles.hospitalButton}
-          onPress={() => setModalVisible(true)}
+          style={[styles.button, styles.acceptButton]}
+          onPress={handleAccept}
+          disabled={serviceStatus === "accepted"}
         >
-          <Text style={styles.hospitalText}>{selectedHospital}</Text>
-          <MaterialIcons name="arrow-drop-down" size={24} color="#fff" />
+          <Text style={styles.buttonText}>
+            {serviceStatus === "accepted" ? "Accepted" : "Accept"}
+          </Text>
         </TouchableOpacity>
-      </View>
 
-      {/* Hospital Selection Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <FlatList
-              data={hospitalOptions}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.hospitalItem}
-                  onPress={() => {
-                    setSelectedHospital(item);
-                    setModalVisible(false);
-                  }}
-                >
-                  <Text style={styles.hospitalItemText}>{item}</Text>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Google Maps View */}
-      <MapView
-        style={styles.map}
-        region={region}
-        onRegionChangeComplete={setRegion}
-      >
-        {/* User's current location marker */}
-        <Marker
-          coordinate={{
-            latitude: region.latitude,
-            longitude: region.longitude,
-          }}
-        />
-
-        {/* Markers for nearby places */}
-        {places.map((place, index) => (
-          <Marker
-            key={index}
-            coordinate={{
-              latitude: place.geometry.location.lat,
-              longitude: place.geometry.location.lng,
-            }}
-            title={place.name}
-          />
-        ))}
-      </MapView>
-
-      {/* Bottom Navigation Placeholder */}
-      <View style={styles.bottomNav}>
-        <MaterialIcons name="home" size={30} color="#000" />
-        <MaterialIcons name="person" size={30} color="#000" />
-        <MaterialIcons name="chat" size={30} color="#000" />
+        <TouchableOpacity
+          style={[styles.button, styles.rejectButton]}
+          onPress={handleReject}
+          disabled={serviceStatus === "rejected"}
+        >
+          <Text style={styles.buttonText}>
+            {serviceStatus === "rejected" ? "Rejected" : "Reject"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -190,84 +83,55 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0c2b2",
-  },
-  header: {
-    backgroundColor: "#f77f82",
-    padding: 20,
+    justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
+    backgroundColor: "#e0f7fa", // Light blue background
   },
-  title: {
+  messageContainer: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 30,
+    width: "90%",
+  },
+  titleText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#000",
+    color: "#008080", // Teal color
+    marginBottom: 10,
   },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 10,
-    color: "#000",
-    backgroundColor: "#e0e0e0",
-    borderRadius: 20,
-    marginHorizontal: 10,
-  },
-  hospitalContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 10,
-  },
-  hospitalButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#e0e0e0",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  hospitalText: {
-    marginRight: 5,
-    color: "#000",
+  messageText: {
     fontSize: 16,
+    textAlign: "center",
+    color: "#333",
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     width: "80%",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
+  },
+  button: {
+    width: "45%",
+    paddingVertical: 15,
+    borderRadius: 5,
     alignItems: "center",
   },
-  hospitalItem: {
-    padding: 15,
-    width: "100%",
-    borderBottomWidth: 1,
-    borderColor: "#e0e0e0",
+  acceptButton: {
+    backgroundColor: "#4caf50", // Green for accept
   },
-  hospitalItemText: {
-    fontSize: 18,
+  rejectButton: {
+    backgroundColor: "#f44336", // Red for reject
   },
-  closeButton: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#f77f82",
-    borderRadius: 5,
-  },
-  closeButtonText: {
+  buttonText: {
     color: "#fff",
     fontWeight: "bold",
-  },
-  map: {
-    flex: 1,
-    width: "100%",
-  },
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
-    backgroundColor: "#fff",
+    fontSize: 16,
   },
 });

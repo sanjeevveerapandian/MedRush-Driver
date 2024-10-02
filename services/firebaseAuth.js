@@ -1,29 +1,34 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps} from "firebase/app";
-import {initializeAuth, getReactNativePersistence, getAuth} from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage'
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// Import the necessary Firebase SDK functions
+import { initializeApp, getApps } from "firebase/app";
+import {
+  initializeAuth,
+  getReactNativePersistence,
+  getAuth,
+} from "firebase/auth";
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
-// Your web app's Firebase configuration
+// Your Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDxtspiBUhEMGPB2rTQ14H2tHfslVJBjXs",
-  authDomain: "react-native-auth-demo-36c56.firebaseapp.com",
-  projectId: "react-native-auth-demo-36c56",
-  storageBucket: "react-native-auth-demo-36c56.appspot.com",
-  messagingSenderId: "612753746622",
-  appId: "1:612753746622:web:dd86519fc60ef1da79ccef"
+  apiKey: "AIzaSyAMcyLhKE6XrppBhyB7LssyWZ77g6v5QHk",
+  authDomain: "medrush-e34ac.firebaseapp.com",
+  databaseURL:
+    "https://medrush-e34ac-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "medrush-e34ac",
+  storageBucket: "medrush-e34ac.appspot.com",
+  messagingSenderId: "862532060031",
+  appId: "1:862532060031:web:b43437c83c6c5e0211d04a",
+  measurementId: "G-13VXDLJTRY",
 };
+
+// Initialize Firebase app and Firestore
 let auth;
-if (getApps().length == 0) {
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    auth = initializeAuth(app, {
-        persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-    })
-}else {
-    auth = getAuth();
+let db;
+if (getApps().length === 0) {
+  const app = initializeApp(firebaseConfig);
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+  });
 }
 
-
-export default auth;
+// Export both auth and db
+export { auth, db };

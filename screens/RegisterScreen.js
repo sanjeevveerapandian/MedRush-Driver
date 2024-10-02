@@ -39,7 +39,7 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <LinearGradient colors={["#f77f82", "#f0c2b2"]} style={styles.container}>
+    <LinearGradient colors={["#34d1e0", "#a3e0e3"]} style={styles.container}>
       <View style={styles.innerContainer}>
         <Text style={styles.title}>Register Now</Text>
 
@@ -48,7 +48,8 @@ export default function RegisterScreen({ navigation }) {
           onChangeText={setEmail}
           placeholder="Enter your email id"
           style={styles.textInput}
-          placeholderTextColor="#fff"
+          placeholderTextColor="#000"
+          value={email}
         />
 
         {/* Password Input */}
@@ -58,13 +59,14 @@ export default function RegisterScreen({ navigation }) {
             placeholder="Enter your password"
             secureTextEntry={hidePassword}
             style={[styles.textInput, { flex: 1 }]}
-            placeholderTextColor="#fff"
+            placeholderTextColor="#000"
+            value={password}
           />
           <TouchableOpacity onPress={togglePasswordVisibility}>
             <MaterialIcons
               name={hidePassword ? "visibility-off" : "visibility"}
               size={24}
-              color="#fff"
+              color="#000"
             />
           </TouchableOpacity>
         </View>
@@ -96,22 +98,22 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     width: "90%",
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: "rgba(255, 255, 255, 0.8)", // Semi-transparent white background
     borderRadius: 10,
     padding: 20,
     alignItems: "center",
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#004d66", // Darker blue color for the title
     marginBottom: 20,
   },
   textInput: {
     width: "100%",
     borderBottomWidth: 1,
-    borderBottomColor: "#fff",
-    color: "#fff",
+    borderBottomColor: "#004d66", // Darker blue color
+    color: "#000",
     paddingVertical: 10,
     marginBottom: 20,
     fontSize: 16,
@@ -120,7 +122,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: "#fff",
+    borderBottomColor: "#004d66", // Darker blue color
     marginBottom: 20,
   },
   error: {
@@ -130,7 +132,7 @@ const styles = StyleSheet.create({
   button: {
     width: "100%",
     paddingVertical: 15,
-    backgroundColor: "#ff7f50",
+    backgroundColor: "#008080", // Teal blue color for the button
     borderRadius: 5,
     alignItems: "center",
     marginVertical: 10,
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   loginText: {
-    color: "#fff",
+    color: "#004d66", // Darker blue color
     marginTop: 20,
     fontSize: 16,
     textDecorationLine: "underline",
